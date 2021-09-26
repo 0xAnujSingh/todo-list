@@ -1,13 +1,7 @@
+from flask import Flask, request, jsonify
 from todo import TodoList
-from termcolor import colored
 
-## Interface
-print("ToDo Application Commands List\n")
-print("add: To add new item")
-print("list: To display all items")
-print("done: To mark an item as done")
-print("flush: To flush the list")
-print("exit: To close the application\n")
+app = Flask(__name__)
 
 lists = {
     'task': TodoList('Task List')
@@ -15,54 +9,68 @@ lists = {
 
 activeList = lists['task']
 
-def startApp():
-    global activeList
+## Create a new list
+@app.route('/list/new/<name>', methods=['POST'])
+def newList(name):
+    if name in lists:
+        return "List with this name already exists."
 
-    while True:
-        print("\n", end="")
-        print(activeList.name, end=": ")
-        cmd = input(colored("Enter A Command: ", "green"))
+    lists[name] = TodoList(name)
 
-        if cmd == "new":
-            name = input('List Name: ')
-            
-            if name in lists:
-                print("List with this name already exists.")
-                continue
+    return "list added"
 
-            lists[name] = TodoList(name)
+## Change the active list
+@app.route('/list/change/<name>')
+def changeList(name):
+    if name not in lists:
+        return 'List does not exist'
 
-        elif cmd == "change":
-            listName = input('Which List?')
-            
-            if listName not in lists:
-                print('List does not exist')
-                continue
+    activeList = lists[name]
 
-            activeList = lists[listName]
+    return 'List change'
 
-        elif cmd == "add":
-            item = input("Enter Item: ")
-            activeList.add(item)
+## Add item to the list
+@app.route('/list/add/<item>')
+def add(item):
+    activeList.add(item)
+    return 'Item added'
 
-        elif cmd == "list":
-            activeList.display()
+## List items in the list
+@app.route('/list')
+def list():
+    res = ''
 
-        elif cmd == "done":
-            item = int(input("Which Item? "))
-            activeList.done(item)
+    res += activeList.name + '\n'
 
-        elif cmd == "undo":
-            item = int(input("Which Item? "))
-            activeList.undo(item)
+    index = 0
+    for item in activeList.items:
+        res += f'[{index}][{item.done}] {item.msg}\n'
+        index += 1
 
-        elif cmd == "flush":
-            activeList.flush()
+    return res
+       
+## Mark an item as done
+@app.route('/list/done/<item>')
+def done(item):
+    try:
+        activeList.done(int(item))
+    except:
+        return 'something went wrong'
+    return 'item done'
 
-        elif cmd == "exit":
-            break
 
-        else:
-            print("Invalid Command. Please try from the given options")
+## Mark an item as not done
+@app.route('/list/undo/<item>')
+def undo(item):
+    try:
+        activeList.undo(int(item))
+    except:
+        return 'something went wrong'
+    return 'Item un-done'
 
-startApp()
+
+## Flush a list
+@app.route('/list/flush')
+def flush():
+    activeList.flush()
+    return 'flush'
