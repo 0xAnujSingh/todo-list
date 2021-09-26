@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify
-from todo import TodoList
+from app.todo import TodoList
 
 app = Flask(__name__)
 
@@ -8,6 +8,10 @@ lists = {
 }
 
 activeList = lists['task']
+
+@app.route('/ram')
+def greet():
+    return "Jai Shree Ram 🙏🙏"
 
 ## Create a new list
 @app.route('/list/new/<name>', methods=['POST'])
