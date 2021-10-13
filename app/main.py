@@ -11,33 +11,33 @@ activeList = lists['task']
 
 @app.route('/ram')
 def greet():
-    return "Jai Shree Ram 🙏🙏"
+    return { "msg": "Jai Shree Ram 🙏🙏" }
 
 ## Create a new list
 @app.route('/list/new/<name>', methods=['POST'])
-def newList(name):
-    if name in lists:
-        return "List with this name already exists."
+def newList(title):
+    if title in lists:
+        return { "msg" : "List with this title already exists." }, 400
 
-    lists[name] = TodoList(name)
+    lists[title] = TodoList(title)
 
-    return "list added"
+    return { "msg" : "list added" }
 
 ## Change the active list
 @app.route('/list/change/<name>')
 def changeList(name):
     if name not in lists:
-        return 'List does not exist'
+        return { 'msg' : 'List does not exist' }, 404
 
     activeList = lists[name]
 
-    return 'List change'
+    return { 'msg' : 'List change' }
 
 ## Add item to the list
 @app.route('/list/add/<item>')
 def add(item):
     activeList.add(item)
-    return 'Item added'
+    return { 'msg' : 'Item added' }
 
 ## List items in the list
 @app.route('/list')
@@ -51,16 +51,16 @@ def list():
         res += f'[{index}][{item.done}] {item.msg}\n'
         index += 1
 
-    return res
-       
+    return { 'msg' : res }
+
 ## Mark an item as done
 @app.route('/list/done/<item>')
 def done(item):
     try:
         activeList.done(int(item))
     except:
-        return 'something went wrong'
-    return 'item done'
+        return { 'msg': 'something went wrong' }, 500
+    return { 'msg' : 'item done' }
 
 
 ## Mark an item as not done
@@ -69,12 +69,12 @@ def undo(item):
     try:
         activeList.undo(int(item))
     except:
-        return 'something went wrong'
-    return 'Item un-done'
+        return { 'msg': 'something went wrong' }, 500
+    return { 'msg' : 'Item un-done' }
 
 
 ## Flush a list
 @app.route('/list/flush')
 def flush():
     activeList.flush()
-    return 'flush'
+    return { 'msg' : 'flush' }
