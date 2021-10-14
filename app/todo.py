@@ -2,25 +2,58 @@ import sqlite3
 from app.db import conn
 
 class TodoItem:
-    def __init__(self, id, description, list, createdAt, done = False):
-        self.msg = msg
+    def __init__(self, itemId, description, listId, createdAt, done = False):
+        self.id = itemId
         self.done = done
+        self.description = description
+        self.listId = listId
+        self.createdAt = createdAt
 
     def complete(self):
         self.done = True
 
-    def status(self):
-        print(self.done, self.msg)
+    def undo(self):
+        self.undo = undo
 
     ## Store a new todo item
     @classmethod
-    def new(cls, desc, list):
-        pass
+    def new(cls, description, listid):
+        cursor = conn.cursor()
+        data = None
+
+        try:
+            cursor.execute("INSERT INTO item(`description`, `list_id`) VALUES (?, ?);", (description, listid))
+            cursor.execute("SELECT  `id`, `description`, `done`, `list_id`, `created_at` FROM `item` WHERE `id` = ?", (cursor.lastrowid, ))
+            data = cursor.fetchone()
+
+            conn.commit()
+        except:
+            raise Exception("item with this name already exists")
+        finally:
+            cursor.close()
+
+        return cls(data[0], data[1], data[2], data[3], data[4])        
 
     ## Get all the todo items for a given list id
     @classmethod
     def findByList(cls, listId):
-        pass
+        cursor = conn.cursor()
+        result = []
+        data = None
+
+        try:
+            cursor.execute("SELECT `id`, `description`, `done`, `list_id`, `created_at` FROM item WHERE list_id = ?;",(listId, ))
+
+            data = cursor.fetchall()
+        except:
+            raise Exception("error: unable to fetch data")
+        finally:
+            cursor.close()
+
+        for item in data:
+            result.append(cls(item[0], item[1], item[2], item[3], item[4]))
+
+        return result
 
 class TodoList:
     def __init__(self, listId, title, description, createdAt):
@@ -36,7 +69,7 @@ class TodoList:
 
         try:
             cursor.execute("INSERT INTO list(`title`, `description`) VALUES (?, ?);", (title, description))
-            cursor.execute("SELECT * FROM `list` WHERE `id` = ?", (cursor.lastrowid, ))
+            cursor.execute("SELECT `id`, `title`, `description`, `created_at` FROM `list` WHERE `id` = ?", (cursor.lastrowid, ))
             data = cursor.fetchone()
 
             conn.commit()
@@ -75,15 +108,7 @@ class TodoList:
     def add(self, msg):
         item = TodoItem.new(msg, self.id)
 
-        print("item added")
-
-    def display(self):
-        print(self.name)
-
-        index = 0
-        for item in self.items:
-            print(index, item.done, item.msg)
-            index += 1
+        return item
 
     def done(self, idx):
         try:
