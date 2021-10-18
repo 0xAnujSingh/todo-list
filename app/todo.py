@@ -12,8 +12,30 @@ class TodoItem:
     def complete(self):
         self.done = True
 
-    def undo(self):
+        cursor = conn.cursor()
+        try:
+            ##where 0 = false, 1 = true in dbms
+            cursor.execute("UPDATE item SET done = 1 WHERE id = ?;", (self.id, ))
+
+            conn.commit()
+        except:
+            raise Exception("item with this id doesn't exists")
+        finally:
+            cursor.close()
+
+    def undo(self, itemId):
         self.undo = undo
+
+        cursor = conn.cursor()
+        try:
+            cursor.execute("UPDATE item SET done = 0 WHERE id = ?;", (self.id, ))
+
+            conn.commit()
+        except:
+            raise Exception("item with this id doesn't exists")
+        finally:
+            cursor.close()
+
 
     ## Store a new todo item
     @classmethod
@@ -62,6 +84,8 @@ class TodoList:
         self.description = description
         self.createdAt = createdAt
 
+    ## Class Methods
+
     @classmethod
     def new(cls, title, description):
         cursor = conn.cursor()
@@ -101,31 +125,34 @@ class TodoList:
 
         return result
 
+    ## Properties
+
     @property
     def items(self):
         return TodoItem.findByList(self.id)
+
+    ## Object Methods
 
     def add(self, msg):
         item = TodoItem.new(msg, self.id)
 
         return item
 
-    def done(self, idx):
-        try:
-            item = self.items[idx]
-            item.complete()
-            print("Item marked as Done!")
-        except IndexError:
-            print("Index not found")
+    def done(self, itemId):
+        item = TodoItem.findById(itemId)
 
-    def undo(self, idx):
-        try:
-            item = self.items[idx]
-            item.done = False
-            print("Item marked as Not Done!")
-        except IndexError:
-            print("Index not found")
+        if item is None:
+            raise Exception("Item not found")
 
-    def flush(self):
-        self.items.clear()
-        print("flush")
+        item.complete()
+
+    def undo(self, itemId):
+        item : TodoItem.findById(itemId)
+
+        if item is None:
+            raise Exception("Item not found")
+
+        item.undo()
+        
+
+        
