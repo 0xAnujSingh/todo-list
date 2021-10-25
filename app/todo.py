@@ -77,6 +77,16 @@ class TodoItem:
 
         return result
 
+    def toJSON(self):
+        return {
+            "id" : self.id,
+            "done" : self.done,
+            "description" : self.description,
+            "listId" : self.listId,
+            "createdAt" : self.createdAt
+        }
+
+
 class TodoList:
     def __init__(self, listId, title, description, createdAt):
         self.id = listId
@@ -125,6 +135,24 @@ class TodoList:
 
         return result
 
+    @classmethod
+    def findById(cls, listId):
+        cursor = conn.cursor()
+        data = None
+
+        try:
+            cursor.execute("SELECT * FROM `list` WHERE `id` = ?", (listId, ))
+            data = cursor.fetchone()
+            
+        except:
+            raise Exception("Something Went Wrong while getting list")
+        finally:
+            cursor.close()
+
+        if data is None:
+            raise Exception("List not found")
+
+        return cls(data[0], data[1], data[2], data[3])
     ## Properties
 
     @property
@@ -154,5 +182,11 @@ class TodoList:
 
         item.undo()
         
-
+    def toJSON(self):
+        return {
+            "id": self.id,
+            "title": self.title,
+            "description": self.description,
+            "createdAt": self.createdAt
+        }
         
