@@ -23,10 +23,9 @@ class TodoItem:
         finally:
             cursor.close()
 
-    def undo(self, itemId):
-        self.undo = undo
-
+    def undo(self):
         cursor = conn.cursor()
+
         try:
             cursor.execute("UPDATE item SET done = 0 WHERE id = ?;", (self.id, ))
 
@@ -59,12 +58,13 @@ class TodoItem:
     ## Get all the todo items for a given list id
     @classmethod
     def findByList(cls, listId):
+
         cursor = conn.cursor()
         result = []
         data = None
 
         try:
-            cursor.execute("SELECT `id`, `description`, `done`, `list_id`, `created_at` FROM item WHERE list_id = ?;",(listId, ))
+            cursor.execute("SELECT `id`, `description`, `done`, `list_id`, `created_at` FROM `item` WHERE list_id = ?;",(listId, ))
 
             data = cursor.fetchall()
         except:
@@ -76,6 +76,25 @@ class TodoItem:
             result.append(cls(item[0], item[1], item[2], item[3], item[4]))
 
         return result
+
+    @classmethod
+    def findById(cls, itemId):
+        cursor = conn.cursor()
+        data = None
+
+        try:
+            cursor.execute("SELECT `id`, `description`, `list_id`, `created_at`, `done` FROM `item` WHERE `id` = ?", (itemId, ))
+            data = cursor.fetchone()
+            
+        except:
+            raise Exception("Something Went Wrong while getting item")
+        finally:
+            cursor.close()
+
+        if data is None:
+            return None
+
+        return cls(data[0], data[1], data[2], data[3], data[4])
 
     def toJSON(self):
         return {
